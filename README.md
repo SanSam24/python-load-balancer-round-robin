@@ -35,30 +35,6 @@ The goal is to simulate how real-world load balancers share traffic to improve p
 * **Requests** (for sending HTTP requests)
 * **itertools** (for round robin logic)
 
----
-
-## 🚀 Steps to Run
-
-1. Install dependencies:
-
-   ```bash
-   pip install flask requests
-   ```
-2. Run both servers in separate terminals:
-
-   ```bash
-   python server1.py
-   python server2.py
-   ```
-3. Run the load balancer:
-
-   ```bash
-   python load_balancer.py
-   ```
-
-
-
----
 
 ##  Key Concept
 
