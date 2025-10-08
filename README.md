@@ -56,11 +56,11 @@ The goal is to simulate how real-world load balancers share traffic to improve p
    python load_balancer.py
    ```
 
-✅ You’ll see requests alternating between both servers.
+
 
 ---
 
-## 🧠 Key Concept
+##  Key Concept
 
 **Round Robin Algorithm** – Distributes requests one by one to each server in sequence, looping back to the first after the last.
 
