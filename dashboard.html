@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Load Balancer Dashboard</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f2f5;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 { text-align: center; color: #0078d7; }
+
+  /* Global summary panel */
+  .summary {
+    max-width: 800px;
+    margin: 0 auto 20px auto;
+    display: flex;
+    justify-content: space-around;
+    background: white;
+    padding: 15px 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    font-weight: bold;
+  }
+
+  .dashboard { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 20px; }
+
+  .server-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    width: 200px;
+    padding: 15px;
+    text-align: center;
+    transition: transform 0.2s;
+  }
+  .server-card:hover { transform: translateY(-5px); }
+  .server-name { font-weight: bold; font-size: 18px; margin-bottom: 8px; }
+  .status { padding: 4px 8px; border-radius: 12px; color: white; font-weight: bold; display: inline-block; margin-bottom: 8px; }
+  .status.active { background-color: #4caf50; }
+  .status.inactive { background-color: #f44336; }
+  .requests { font-size: 14px; margin-bottom: 8px; }
+  
+  /* Latency bar enhancement */
+  .latency-bar {
+    height: 12px;
+    border-radius: 6px;
+    margin-top: 4px;
+    background: #ddd;
+    position: relative;
+  }
+  .latency-fill {
+    height: 100%;
+    border-radius: 6px;
+    text-align: right;
+    padding-right: 4px;
+    color: white;
+    font-size: 10px;
+    line-height: 12px;
+  }
+  .latency-fill.green { background-color: #4caf50; }
+  .latency-fill.yellow { background-color: #ff9800; }
+  .latency-fill.red { background-color: #f44336; }
+
+  .recent-activity {
+    max-width: 800px;
+    margin: 30px auto;
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+  .recent-activity h2 { margin-top: 0; }
+  .recent-activity ul { max-height: 200px; overflow-y: auto; padding-left: 20px; }
+  .recent-activity li { margin-bottom: 6px; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<h1>🌐 Load Balancer Dashboard</h1>
+
+<div class="summary" id="summary">
+  <div>Total Requests: <span id="total">0</span></div>
+  <div>Avg Latency: <span id="avg">0</span>s</div>
+  <div>Most Loaded Server: <span id="most">-</span></div>
+</div>
+
+<div class="dashboard" id="dashboard"></div>
+
+<div class="recent-activity">
+  <h2>Recent Activity</h2>
+  <ul id="recent"></ul>
+</div>
+
+<script>
+function getLatencyColor(lat) {
+  if(lat < 0.05) return 'green';
+  if(lat < 0.15) return 'yellow';
+  return 'red';
+}
+
+async function fetchDashboard() {
+  try {
+    const res = await fetch("http://127.0.0.1:8080/dashboard");
+    const data = await res.json();
+
+    // Global summary
+    document.getElementById("total").textContent = data.total_requests;
+    document.getElementById("avg").textContent = data.average_latency_sec.toFixed(3);
+    let maxServer = Object.keys(data.per_server_requests).reduce((a,b) => data.per_server_requests[a] > data.per_server_requests[b] ? a : b);
+    document.getElementById("most").textContent = maxServer.split(":")[2];
+
+    // Server cards
+    const dash = document.getElementById("dashboard");
+    dash.innerHTML = '';
+    for(const server of Object.keys(data.per_server_requests)) {
+      const count = data.per_server_requests[server];
+      const recent = data.recent_activity.filter(r => r.server === server);
+      const lastLatency = recent.length ? recent[recent.length-1].latency : 0;
+      const color = getLatencyColor(lastLatency);
+
+      const card = document.createElement('div');
+      card.className = 'server-card';
+      card.innerHTML = `
+        <div class="server-name">${server.split(":")[2]}</div>
+        <div class="status ${data.active_servers.includes(server) ? 'active' : 'inactive'}">
+          ${data.active_servers.includes(server) ? 'ACTIVE' : 'INACTIVE'}
+        </div>
+        <div class="requests">Requests: ${count}</div>
+        <div class="latency-bar">
+          <div class="latency-fill ${color}" style="width: ${Math.min(lastLatency*500,100)}%">
+            ${lastLatency.toFixed(3)}s
+          </div>
+        </div>
+      `;
+      dash.appendChild(card);
+    }
+
+    // Recent activity
+    const recentList = document.getElementById("recent");
+    recentList.innerHTML = '';
+    data.recent_activity.slice(-10).reverse().forEach(r => {
+      const li = document.createElement('li');
+      li.textContent = `${r.timestamp} | ${r.server.split(":")[2]} | ${r.latency.toFixed(3)}s`;
+      recentList.appendChild(li);
+    });
+
+  } catch(err) {
+    console.error("Error fetching dashboard:", err);
+  }
+}
+
+fetchDashboard();
+setInterval(fetchDashboard, 2000);
+</script>
+</body>
+</html>

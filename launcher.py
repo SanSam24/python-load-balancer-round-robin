@@ -1,6 +1,6 @@
 import subprocess
-import time
 import sys
+import time
 
 server_scripts = [
     "server1.py",
@@ -14,7 +14,7 @@ server_scripts = [
 processes = []
 
 def start_server(script):
-    return subprocess.Popen([sys.executable, script], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return subprocess.Popen([sys.executable, script])
 
 if __name__ == "__main__":
     print("Starting backend servers...")
@@ -22,15 +22,14 @@ if __name__ == "__main__":
         p = start_server(script)
         processes.append(p)
         print(f"Started {script}")
-        time.sleep(0.5)  # Small delay for clean startup
+        time.sleep(0.5)
 
     print("All servers started. Press Ctrl+C to terminate.")
-
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        print("\nShutting down all servers...")
+        print("\nShutting down servers...")
         for p in processes:
             p.terminate()
         print("All servers terminated.")
