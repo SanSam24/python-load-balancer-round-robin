@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # Python Round Robin Load Balancer
 
 ## Overview
@@ -169,6 +169,3 @@ Request 2 → http://localhost:5002
 Response 2: Hello from Server 2!
 Request 3 → http://localhost:5001
 Response 3: Hello from Server 1!
-```
-
->>>>>>> 7cf05ef5b4804720bd4bdc0e7a577221668cbce3
